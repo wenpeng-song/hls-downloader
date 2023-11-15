@@ -22,7 +22,8 @@ module.exports = {
         "@typescript-eslint/no-unused-vars": "off",
         "@typescript-eslint/no-inferrable-types": "off",
         "@typescript-eslint/explicit-function-return-type": "off",
-        "indent": "off"
+        "indent": "off",
+        "no-constant-condition": "off"
     },
     "overrides": [
         {

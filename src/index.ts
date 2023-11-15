@@ -25,7 +25,7 @@ export async function download(config: IConfig): Promise<void> {
     const scte35 = new SCTE35Handler(logger);
     if (streamChooser.isPlaylist() && config.onlyM3u8) {
         manifest = streamChooser.manifest!;
-        console.log(JSON.stringify(manifest, null, 2));
+        // console.log(JSON.stringify(manifest, null, 2));
         return scte35.parseSCTE35(manifest);
     }
 
@@ -45,7 +45,7 @@ export async function download(config: IConfig): Promise<void> {
         );
         await m3u8Downloader.start();
         manifest = m3u8Downloader.manifest!;
-        console.log(JSON.stringify(manifest, null, 2));
+        // console.log(JSON.stringify(manifest, null, 2));
         return scte35.parseSCTE35(manifest);
     }
 

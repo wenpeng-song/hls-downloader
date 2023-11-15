@@ -1,6 +1,14 @@
 declare module "m3u8-parser" {
     interface ManifestSegment {
         uri: string;
+        duration: number,
+        programDateTime?:  number,
+        attributes: {},
+        discontinuity?: number,
+        timeline?: number,
+        'cue-out'?: string,
+        'cue-out-cont'?: string,
+        'cue-in'?: string,
     }
 
     interface ManifestPlaylist {
