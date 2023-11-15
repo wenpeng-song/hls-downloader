@@ -5,6 +5,8 @@ dist/
 out/
 *.lnk
 
+build/
+
 
 
 # Logs

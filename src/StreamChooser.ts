@@ -1,22 +1,23 @@
 import * as m3u8 from "m3u8-parser";
 import { URL } from "url";
-import { get, HttpHeaders } from "./http";
+import { get, getWithRetries, HttpHeaders } from "./http";
 import { ILogger } from "./Logger";
 
 export class StreamChooser {
-    private manifest?: m3u8.Manifest;
+    public manifest?: m3u8.Manifest;
 
     constructor(
         private logger: ILogger,
         private streamUrl: string,
+        protected maxRetries?: number,
         private httpHeaders?: HttpHeaders,
     ) {}
 
     public async load(): Promise<boolean> {
-        const streams = await get(this.streamUrl, this.httpHeaders);
+        const response = await getWithRetries(this.streamUrl, this.httpHeaders, this.maxRetries);
 
         const parser = new m3u8.Parser();
-        parser.push(streams);
+        parser.push(response);
         parser.end();
 
         this.manifest = parser.manifest;
@@ -32,6 +33,13 @@ export class StreamChooser {
         }
 
         return this.manifest.playlists && this.manifest.playlists.length > 0 || false;
+    }
+
+    public isPlaylist(): boolean {
+        if (!this.manifest) {
+            throw Error("You need to call 'load' before 'isMaster'");
+        }
+        return (!!this.manifest.segments && this.manifest.segments.length > 0);
     }
 
     public getPlaylistUrl(maxBandwidth?: "worst" | "best" | number): string | false {
@@ -58,7 +66,7 @@ export class StreamChooser {
             } else if (maxBandwidth === "worst") {
                 compareFn = (prev, current) => (prev.attributes.BANDWIDTH > current.attributes.BANDWIDTH) ? current : prev;
             } else {
-                compareFn = (prev, current) => (prev.attributes.BANDWIDTH > current.attributes.BANDWIDTH || current.attributes.BANDWIDTH > maxBandwidth) ? prev : current;
+                compareFn = (prev, current) => (prev.attributes.BANDWIDTH > current.attributes.BANDWIDTH || current.attributes.BANDWIDTH as number > maxBandwidth) ? prev : current;
             }
             const uri = this.manifest.playlists.reduce(compareFn).uri;
             return new URL(uri, this.streamUrl).href;

@@ -2,6 +2,7 @@ import { HttpHeaders } from "./http";
 import { ILogger } from "./Logger";
 
 export interface IConfig {
+    onlyM3u8?: boolean;
     mergeUsingFfmpeg?: boolean;
     ffmpegPath?: string;
     concurrency?: number;

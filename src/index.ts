@@ -8,11 +8,42 @@ import { mergeChunks as mergeChunksFfmpeg, transmuxTsToMp4 } from "./ffmpeg";
 import { mergeFiles as mergeChunksStream } from "./stream";
 import { StreamChooser } from "./StreamChooser.js";
 import { buildLogger, ILogger } from "./Logger";
+import { M3u8OnlyDownloader } from "./M3u8OnlyDownloader";
 
 export type IConfig = IIConfig;
 
 export async function download(config: IConfig): Promise<void> {
     const logger: ILogger = buildLogger(config.logger);
+
+    // Choose proper stream
+    const streamChooser = new StreamChooser(logger, config.streamUrl, config.maxRetries, config.httpHeaders);
+    if (!await streamChooser.load()) {
+        return;
+    }
+    let manifest = null;
+    if (streamChooser.isPlaylist() && config.onlyM3u8) {
+        manifest = streamChooser.manifest;
+        return;
+    }
+
+    const playlistUrl = streamChooser.getPlaylistUrl(config.quality);
+    if (!playlistUrl) {
+        return;
+    }
+
+    if (config.onlyM3u8) {
+        const m3u8Downloader = new M3u8OnlyDownloader(
+            logger,
+            playlistUrl,
+            config.concurrency || 1,
+            config.maxRetries || 1,
+            "",
+            config.httpHeaders,
+        );
+        await m3u8Downloader.start();
+        manifest = m3u8Downloader.manifest;
+        return;
+    }
 
     // Temporary files
     const runId = Date.now();
@@ -23,16 +54,6 @@ export async function download(config: IConfig): Promise<void> {
     // Create target directory
     fs.mkdirpSync(path.dirname(mergedSegmentsFile));
     fs.mkdirpSync(segmentsDir);
-
-    // Choose proper stream
-    const streamChooser = new StreamChooser(logger, config.streamUrl, config.httpHeaders);
-    if (!await streamChooser.load()) {
-        return;
-    }
-    const playlistUrl = streamChooser.getPlaylistUrl(config.quality);
-    if (!playlistUrl) {
-        return;
-    }
 
     // Start download
     const chunksDownloader = config.live

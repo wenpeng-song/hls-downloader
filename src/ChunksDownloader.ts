@@ -1,7 +1,7 @@
 import * as m3u8 from "m3u8-parser";
 import PQueue from "p-queue";
 import * as path from "path";
-import { download, get, HttpHeaders } from "./http";
+import { download, get, getWithRetries, HttpHeaders } from "./http";
 import { ILogger } from "./Logger";
 
 export abstract class ChunksDownloader {
@@ -35,7 +35,7 @@ export abstract class ChunksDownloader {
     protected abstract refreshPlayList(): Promise<void>;
 
     protected async loadPlaylist(): Promise<m3u8.Manifest> {
-        const response = await get(this.playlistUrl, this.httpHeaders);
+        const response = await getWithRetries(this.playlistUrl, this.httpHeaders, this.maxRetries);
 
         const parser = new m3u8.Parser();
         parser.push(response);

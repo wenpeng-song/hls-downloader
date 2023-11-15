@@ -10,6 +10,7 @@ declare module "m3u8-parser" {
     }
 
     interface Manifest {
+        dateRanges?: Record<string, string>[];
         targetDuration?: number;
         segments?: ManifestSegment[];
         playlists?: ManifestPlaylist[];

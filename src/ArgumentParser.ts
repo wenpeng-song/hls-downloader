@@ -20,13 +20,14 @@ export class ArgumentParser {
         args
             .version(packageJson.version)
             .usage("[options] <url>")
+            .option("--only-m3u8", "Only parse the m3u8, not really download Segments", false)
             .option("--live", "Download the stream as a live feed", false)
             .option("--ffmpeg-merge", "Merge TS segments using FFMPEG", false)
             .option("--ffmpeg-path", "Path to the FFMPEG binary", "ffmpeg")
             .option("--segments-dir <dir>", "Where the TS segments will be stored")
             .option("--merged-segments-file <file>", "Location of the merged TS segments file")
             .option("-c, --concurrency <threads>", "How many threads to use for segment downloads", (v: string) => parseInt(v, 10), 1)
-            .option("-r, --max-retries <retries>", "How many times to retry on failed segment downloads", (v: string) => parseInt(v, 10), 1)
+            .option("-r, --max-retries <retries>", "How many times to retry on failed segment downloads", (v: string) => parseInt(v, 10), 3)
             .option("-q, --quality <quality>", "Stream quality when possible (worst, best, or max bandwidth)", "best")
             .option("-o, --output-file <file>", "Target file to download the stream to")
             .option("-h, --header <header>", "Header to pass to the HTTP requests", parseHeaders, {})
@@ -50,6 +51,7 @@ export class ArgumentParser {
 
         // Read arguments to variables
         return {
+            onlyM3u8: opts.onlyM3u8,
             concurrency: opts.concurrency,
             maxRetries: opts.maxRetries,
             fromEnd: opts.fromEnd,
