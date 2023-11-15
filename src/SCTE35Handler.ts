@@ -159,10 +159,12 @@ export class SCTE35Handler {
                         typeof spliceCommand.breakDuration?.duration === 'number'
                             ? spliceCommand.breakDuration.duration / 90000
                             : Math.min(duration, this._defaultAdBreakDuration);
+                    console.log(`CUE-OUT:  id: ${id}  Start:  ${start},  Duration: ${adBreakDuation}`)
                     // this._adUnitManager.addLiveMidrollAdUnit(start, id, adBreakDuation);
                 } else {
                     // cue-in
                     // typeof end === 'number' && this._adUnitManager.updateLiveMidrollAdUnit(end, id);
+                    console.log(`CUE-IN:  id: ${id}  Start:  ${start},  End: ${end}`)
                 }
                 break;
             }

@@ -44,7 +44,7 @@ export class ArgumentParser {
             console.error("Invalid quality provided:", opts.quality);
             return false;
         }
-        if (!opts.outputFile) {
+        if (!opts.onlyM3u8 && !opts.outputFile) {
             console.error("You must provide an output file");
             return false;
         }

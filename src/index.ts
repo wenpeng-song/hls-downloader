@@ -9,21 +9,24 @@ import { mergeFiles as mergeChunksStream } from "./stream";
 import { StreamChooser } from "./StreamChooser.js";
 import { buildLogger, ILogger } from "./Logger";
 import { M3u8OnlyDownloader } from "./M3u8OnlyDownloader";
+import { SCTE35Handler } from "./SCTE35Handler";
 
 export type IConfig = IIConfig;
 
 export async function download(config: IConfig): Promise<void> {
     const logger: ILogger = buildLogger(config.logger);
-
+    
     // Choose proper stream
     const streamChooser = new StreamChooser(logger, config.streamUrl, config.maxRetries, config.httpHeaders);
     if (!await streamChooser.load()) {
         return;
     }
     let manifest = null;
+    const scte35 = new SCTE35Handler(logger);
     if (streamChooser.isPlaylist() && config.onlyM3u8) {
-        manifest = streamChooser.manifest;
-        return;
+        manifest = streamChooser.manifest!;
+        console.log(JSON.stringify(manifest, null, 2));
+        return scte35.parseSCTE35(manifest);
     }
 
     const playlistUrl = streamChooser.getPlaylistUrl(config.quality);
@@ -41,8 +44,9 @@ export async function download(config: IConfig): Promise<void> {
             config.httpHeaders,
         );
         await m3u8Downloader.start();
-        manifest = m3u8Downloader.manifest;
-        return;
+        manifest = m3u8Downloader.manifest!;
+        console.log(JSON.stringify(manifest, null, 2));
+        return scte35.parseSCTE35(manifest);
     }
 
     // Temporary files
