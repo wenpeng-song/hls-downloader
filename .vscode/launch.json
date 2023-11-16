@@ -5,6 +5,19 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Launch Program",
+            "program": "${workspaceFolder}/dist/cli.js",
+            "request": "launch",
+            "args": [
+                "--only-m3u8",
+                "http://172.16.4.234:8080/clear/wnba/t594_hd.m3u8"
+            ],
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "type": "node"
+        },
+        {
             "name": "Launch cli.ts",
             "type": "node",
             "request": "launch",

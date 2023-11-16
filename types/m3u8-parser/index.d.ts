@@ -6,9 +6,9 @@ declare module "m3u8-parser" {
         attributes: {},
         discontinuity?: number,
         timeline?: number,
-        'cue-out'?: string,
-        'cue-out-cont'?: string,
-        'cue-in'?: string,
+        cueOut?: string,
+        cueOutCont?: string,
+        cueIn?: string,
     }
 
     interface ManifestPlaylist {

@@ -69,7 +69,7 @@ export class SCTE35Handler {
             if (!(dateRange[DateRangeAttributes.SCTE35_IN] || dateRange[DateRangeAttributes.SCTE35_OUT])) {
                 continue;
             }
-            console.log(`EXT-X-DATERANGE CUE:, ${JSON.stringify(dateRange, null, 2)}`)
+            // console.log(`EXT-X-DATERANGE CUE:, ${JSON.stringify(dateRange, null, 2)}`)
 
             try {
                 const startDate = new Date(dateRange[DateRangeAttributes.START_DATE]);
@@ -127,6 +127,32 @@ export class SCTE35Handler {
             }
         }
         console.log(`Parse M3U8 Finish, there is ${dateRangeFrames.length} valid CUE in EXT-X-DATERANGE`)
+
+        if (!Array.isArray(manifest.segments)) {
+            console.log(`RECEIVE M3U8, there is NO Segment in M3U8`);
+            return;
+        }
+        const cues = [];
+        for (let i = 0; i < manifest.segments.length; i++) {
+            const segment = manifest.segments[i];
+            const cueOut = segment.cueOut;
+            const timestamp = segment.programDateTime;
+            const cueIn = segment.cueIn;
+            const cueOutCont = segment.cueOutCont;
+            // console.log(`segment Info: ${JSON.stringify(segment, null, 2)}`);
+            if (Object.prototype.hasOwnProperty.call(segment, 'cueIn') || Object.prototype.hasOwnProperty.call(segment,'cueOut')) {
+                console.log(`segment Cue Info: cue-out: ${cueOut}, cue-in: ${cueIn}, timestamp: ${timestamp}, cue-out-cont: ${cueOutCont}`);
+                if (Object.prototype.hasOwnProperty.call(segment, 'cueOut')) {
+                    cues.push({start: timestamp});
+                }
+                if (Object.prototype.hasOwnProperty.call(segment, 'cueIn')) {
+                    cues.push({end: timestamp});
+                }
+                // cues.push({cueOut, cueIn, cueOutCont});
+            }
+        }
+        console.log(`Parse M3U8, cues: ${JSON.stringify(cues)}`);
+
     }
     
     private handleScte35Event(scte35Splice: ISpliceInfoSection, start: number, duration: number, end?: number, idFromManifest?: string) {
