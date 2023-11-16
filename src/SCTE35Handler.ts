@@ -48,13 +48,19 @@ export enum DateRangeAttributes {
     SCTE35_IN = 'scte35In',
     SCTE35_CMD = 'scte35Cmd'
 }
+
+export type SCTE35Cue = {
+    id?: string,
+    start?: number | undefined,
+    end?: number | undefined,
+}
 export class SCTE35Handler {
     _defaultAdBreakDuration = 15 * 60;
     constructor(
         protected logger: ILogger,
     ) {}
 
-    parseSCTE35(manifest: m3u8.Manifest) {
+    parseSCTE35(manifest: m3u8.Manifest, scte35DataRange: SCTE35Cue[], scte35Cues: SCTE35Cue[]) {
         const dateRangeFrames: InPlaylistFrame[] = [];
 
         if (!Array.isArray(manifest.dateRanges)) {
@@ -99,7 +105,13 @@ export class SCTE35Handler {
                 const startTime = startDate.getTime();
                 const endTime = dateRangeFrame.endDate ? dateRangeFrame.endDate?.getTime() : undefined;
 
-                console.log(`SCTE-35: id: ${dateRangeFrame.id}, start: ${startTime} end: ${endTime} \r\n`);
+                const cue: SCTE35Cue = {
+                    id: dateRangeFrame.id,
+                    start: startTime,
+                    end: endTime,
+                }
+                console.log(`SCTE-35: ${JSON.stringify(cue)} \r\n`);
+                scte35DataRange.push(cue);
                 if (false) {
                     const messageData =
                         dateRange[DateRangeAttributes.SCTE35_IN] ??
@@ -132,11 +144,14 @@ export class SCTE35Handler {
             console.log(`RECEIVE M3U8, there is NO Segment in M3U8`);
             return;
         }
-        const cues = [];
+        const cues: SCTE35Cue[] = [];
         for (let i = 0; i < manifest.segments.length; i++) {
             const segment = manifest.segments[i];
             const cueOut = segment.cueOut;
             const timestamp = segment.programDateTime;
+            if (!timestamp) { // skip the segment without timestamp.
+                continue;
+            }
             const cueIn = segment.cueIn;
             const cueOutCont = segment.cueOutCont;
             // console.log(`segment Info: ${JSON.stringify(segment, null, 2)}`);
@@ -148,11 +163,26 @@ export class SCTE35Handler {
                 if (Object.prototype.hasOwnProperty.call(segment, 'cueIn')) {
                     cues.push({end: timestamp});
                 }
-                // cues.push({cueOut, cueIn, cueOutCont});
             }
         }
-        console.log(`Parse M3U8, cues: ${JSON.stringify(cues)}`);
 
+        let cacheStart = 0;
+        for (let i = 0; i < cues.length; i ++) {
+            if (typeof cues[i].start === 'number') {
+                cacheStart = cues[i].start!;
+            }
+            if (typeof cues[i].end === 'number') {
+                scte35Cues.push({ start: cacheStart, end: cues[i].end });
+                cacheStart = 0;
+                continue;
+            }
+        }
+        if (cacheStart) {
+            scte35Cues.push({ start: cacheStart, end: Infinity });
+            cacheStart = 0;
+        }
+       
+        console.log(`Parse M3U8, cues: ${JSON.stringify(scte35Cues)}`);
     }
     
     private handleScte35Event(scte35Splice: ISpliceInfoSection, start: number, duration: number, end?: number, idFromManifest?: string) {
